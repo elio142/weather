@@ -1,34 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  // const API_KEY=import.meta.env.VITE_WEATHER_API_KEY;
+ 
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className='min-h-screen bg-[#9CCEF4]  font-raleway'>
+      <div className='w-full mx-auto bg-[#759EDA]  shadow-sm p-6'>
+        <div className='flex  mb-0'>
+          <input type="text"
+          placeholder="Type in a city name"
+          className='text-white  w-60 h-10  px-4 rounded-l-lg focus:outline-none focus:ring-0'/>
+          <button
+          className='bg-[#5879C7] text-black px-5 py-2 h-10 mt-1  flex m-0 hover:bg-blue-600'>FIND WEATHER</button>
+         
+
+        </div>
+
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+
+     
+    </div>
   )
 }
 
