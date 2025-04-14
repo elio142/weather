@@ -3,13 +3,16 @@ import Header from "./components/header.jsx";
 import WeatherBody from "./components/weatherBody";
 
 function App() {
-  const API_KEY=import.meta.env.VITE_WEATHER_API_KEY;
-  const [count, setCount] = useState(0);
+  const [city, setCity] = useState("");
+
+  const handleSearch = (searchCity) => {
+    setCity(searchCity);
+  };
 
   return (
-    <div className="min-h-screen bg-green-100 text-black p-10"> 
-      <Header />
-      <WeatherBody />
+    <div className="bg-[#9CCEF4] text-black"> 
+      <Header onSearch={handleSearch} />
+      <WeatherBody city={city} />
     </div>
   );
 }
