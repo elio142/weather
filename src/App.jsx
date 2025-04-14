@@ -1,16 +1,15 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./index.css";
-import "./header.jsx";
+import Header from "./components/header.jsx";
+import WeatherBody from "./components/weatherBody";
 
 function App() {
+  const API_KEY=import.meta.env.VITE_WEATHER_API_KEY;
   const [count, setCount] = useState(0);
 
   return (
-    <div className="text-2xl text-center bg-blue-400">
-      
-      <div></div>
+    <div className="min-h-screen bg-green-100 text-black p-10"> 
+      <Header />
+      <WeatherBody />
     </div>
   );
 }
