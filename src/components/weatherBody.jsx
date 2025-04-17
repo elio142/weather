@@ -16,32 +16,26 @@ const WeatherBody = ({ city }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const defaultCity = city || "Beirut,LB";  // Default to Beirut if no city is provided
+
   useEffect(() => {
-    const cityToFetch = city || "Beirut,LB";
-    fetchWeatherData(cityToFetch);
-  }, [city]);
+    fetchWeatherData(defaultCity);
+  }, [defaultCity]);
 
   const fetchWeatherData = async (cityName) => {
     setLoading(true);
     setError(null);
     try {
       const API_KEY = "f00c38e0279b7bc85480c3fe775d518c";
-      const response = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${API_KEY}`
-      );
-      
-      if (!response.ok) {
-        throw new Error('City not found. Please try again.');
-      }
-      
-      const data = await response.json();
-      setWeatherData(data);
-
-      const forecastResponse = await fetch(
-        `https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&units=metric&appid=${API_KEY}`
-      );
-      const forecastData = await forecastResponse.json();
-      setForecastData(forecastData);
+      const [weatherRes, forecastRes] = await Promise.all([
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=metric&appid=${API_KEY}`),
+        fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${cityName}&units=metric&appid=${API_KEY}`)
+      ]);
+      if (!weatherRes.ok || !forecastRes.ok) throw new Error("City not found. Please try again.");
+      const weather = await weatherRes.json();
+      const forecast = await forecastRes.json();
+      setWeatherData(weather);
+      setForecastData(forecast);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -49,56 +43,34 @@ const WeatherBody = ({ city }) => {
     }
   };
 
-  const getBackgroundColor = (weatherCondition) => {
-    const condition = weatherCondition.toLowerCase();
-    if (condition.includes('rain') || condition.includes('drizzle')) {
-      return 'bg-gray-400';
-    } else if (condition.includes('clear') && !condition.includes('cloud')) {
-      return 'bg-blue-400';
-    } else if (condition.includes('cloud') && !condition.includes('rain')) {
-      return 'bg-[#9CCEF4]';
-    } else {
-      return 'bg-[#9CCEF4]';
-    }
+  // Simplified background color based on weather ID
+  const getBackgroundColor = (weatherId) => {
+    if (weatherId < 300) return 'bg-gray-400'; // Thunderstorm
+    if (weatherId >= 500 && weatherId < 600) return 'bg-gray-400'; // Rainy
+    if (weatherId < 700) return 'bg-[#9CCEF4]'; // Snow
+    if (weatherId === 800) return 'bg-blue-500'; // Clear
+    return 'bg-[#9CCEF4]'; // Clouds
   };
 
+  // Get the icon based on the weather condition
   const getWeatherIcon = (weatherCondition) => {
-    const condition = weatherCondition.toLowerCase();
-    if (condition.includes('rain') || condition.includes('drizzle')) {
-      return rain;
-    }
-    switch (condition) {
-      case 'clear':
+    switch (weatherCondition) {
+      case 'Clear':
         return clear;
-      case 'clouds':
+      case 'Clouds':
         return mostlycloudy;
-      case 'partly cloudy':
-        return partlycloudy;
-      case 'snow':
+      case 'Rain':
+      case 'Drizzle':
+        return rain;
+      case 'Snow':
         return snow;
-      case 'thunderstorm':
+      case 'Thunderstorm':
         return storm;
-      case 'mist':
-      case 'fog':
-      case 'haze':
+      case 'Fog':
         return fog;
       default:
         return unknown;
     }
-  };
-
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const getMostFrequentWeather = (forecasts) => {
-    const weatherCounts = {};
-    forecasts.forEach(forecast => {
-      const condition = forecast.weather[0].main;
-      weatherCounts[condition] = (weatherCounts[condition] || 0) + 1;
-    });
-    return Object.entries(weatherCounts).sort((a, b) => b[1] - a[1])[0][0];
   };
 
   if (loading) {
@@ -125,29 +97,22 @@ const WeatherBody = ({ city }) => {
     );
   }
 
-  // Get the most frequent weather condition from hourly forecast
-  const mostFrequentWeather = getMostFrequentWeather(forecastData.list);
-  const backgroundColor = getBackgroundColor(mostFrequentWeather);
-  const weatherIcon = getWeatherIcon(mostFrequentWeather);
+  const weatherId = weatherData.weather[0].id;  // Weather ID from API
+  const backgroundColor = getBackgroundColor(weatherId);
+  const weatherIcon = getWeatherIcon(weatherData.weather[0].main);
 
-  const hourlyForecast = forecastData.list.slice(0, 7).map(forecast => ({
-    time: formatTime(forecast.dt),
+  const hourlyForecast = forecastData.list.slice(0, 7).map((forecast) => ({
+    time: new Date(forecast.dt * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     temp: `${Math.round(forecast.main.temp)}°C`,
     icon: getWeatherIcon(forecast.weather[0].main)
   }));
 
   return (
-    <div className={`${backgroundColor} text-center p-8 font-raleway text-blue-900 h-screen`}>
+    <div className={`${backgroundColor} transition-colors duration-700 text-center p-8 font-raleway text-blue-900 h-screen`}>
       <div className="flex flex-col items-center mb-6">
-        <img 
-          src={weatherIcon} 
-          alt="current weather" 
-          className="w-48 h-48" 
-        />
+        <img src={weatherIcon} alt="current weather" className="w-48 h-48" />
         <p className="text-2xl mb-2 text-white">{weatherData.weather[0].description}</p>
-        <p className="text-lg mb-2 text-white">
-          Feels like: {Math.round(weatherData.main.feels_like)}°C
-        </p>
+        <p className="text-lg mb-2 text-white">Feels like: {Math.round(weatherData.main.feels_like)}°C</p>
         <p className="font-semibold text-xl mb-2">
           Temperature <span className="font-normal ml-2">{Math.round(weatherData.main.temp)}°C</span>
         </p>
@@ -157,7 +122,7 @@ const WeatherBody = ({ city }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7">
         {hourlyForecast.map((hour, index) => (
           <div key={index} className="flex flex-col items-center">
             <p className="mb-1 text-sm">{hour.time}</p>
